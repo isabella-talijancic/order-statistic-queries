@@ -9,6 +9,10 @@ import java.util.Random;
  * Spring 2023
  */
 
-public class Main {
+public class Main 
+
+{
+
+	
 	
 }
