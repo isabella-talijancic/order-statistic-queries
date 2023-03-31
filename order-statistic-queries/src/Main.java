@@ -16,12 +16,13 @@ import java.util.Scanner;
  */
 public class Main {
 
-    private static final int EARTH_RADIUS = 6371; // km
+    //private static final int EARTH_RADIUS = 6371; // km
+	static double radiusOfEarthInMiles = 3958.8;
 
     public static void main(String[] args) {
         // Read in store data
         ArrayList<Store> whataburgerStores = readStoresFromFile("src/data/WhataburgerData.csv");
-        ArrayList<Store> starbucksStores = readStoresFromFile("src/data/StarbucksData.csv");
+        //ArrayList<Store> starbucksStores = readStoresFromFile("src/data/StarbucksData.csv");
 
         // Read in query points
         ArrayList<Query> queries = readQueriesFromFile("src/data/Queries.csv");
@@ -29,15 +30,15 @@ public class Main {
         // Perform queries
         for (Query query : queries) {
             ArrayList<StoreDistance> distances = new ArrayList<>();
-            // Compute distances from query point to all stores
+             //Compute distances from query point to all stores
             for (Store store : whataburgerStores) {
                 double distance = Haversine.calculateDistance(query.latitude, query.longitude, store.latitude, store.longitude);
                 distances.add(new StoreDistance(store, distance));
             }
-            for (Store store : starbucksStores) {
-                double distance = Haversine.calculateDistance(query.latitude, query.longitude, store.latitude, store.longitude);
-                distances.add(new StoreDistance(store, distance));
-            }
+//            for (Store store : starbucksStores) {
+//                double distance = Haversine.calculateDistance(query.latitude, query.longitude, store.latitude, store.longitude);
+//                distances.add(new StoreDistance(store, distance));
+//            }
             // Use order statistic query to find farthest store we care about
             int k = query.numStores;
             if (k > distances.size()) {
@@ -69,7 +70,8 @@ public class Main {
             System.out.println("The " + query.numStores + " closest Stores to (" + query.latitude + "," + query.longitude + "):");
             for (Store store : closeStores) {
                 double distance = Haversine.calculateDistance(query.latitude, query.longitude, store.latitude, store.longitude);
-                System.out.println("Store #" + store.id + ". " + store.address + ", " + store.city + ", " + store.state +", " + store.zipCode + ". - " + distance + " km)");
+                String formattedDistance = String.format("%.2f", distance);
+                System.out.println("Store #" + store.id + ". " + store.address + ", " + store.city + ", " + store.state +", " + store.zipCode + ". - " + formattedDistance + " miles)");
             }
             System.out.println();
         }
@@ -105,7 +107,8 @@ public class Main {
             Scanner scanner = new Scanner(new File(filename));
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
-                String[] parts = line.split(",");
+                //String[] parts = line.split(",");
+                String[] parts = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
                 String id = parts[0];
                 String address = parts[1];
                 String city = parts[2];
@@ -212,7 +215,8 @@ public class Main {
         
         //Haversine Class
         class Haversine{
-        	private static final int EARTH_RADIUS = 6371; // km
+        	//private static final int EARTH_RADIUS = 6371; // km
+        	static double radiusOfEarthInMiles = 3958.8;
 
         	public static double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
         	    double dLat = Math.toRadians(lat2 - lat1);
@@ -223,6 +227,6 @@ public class Main {
         	               Math.sin(dLon / 2) * Math.sin(dLon / 2) *
         	               Math.cos(lat1Rad) * Math.cos(lat2Rad);
         	    double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        	    return EARTH_RADIUS * c;
+        	    return radiusOfEarthInMiles * c;
         	}
         }
