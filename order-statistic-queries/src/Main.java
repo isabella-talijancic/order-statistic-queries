@@ -1,13 +1,13 @@
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.Random;
 import java.util.Scanner;
 
 /**
- * Main is a Java class representing Project 2's needs as we determine the specified number of stores
+ * Main contains all necessary classes and determines the specified number of stores
  * located more closely to the given coordinates using the Order Statistic Query algorithm, Rand-Select algorithm, and more
  * 
  * UTSA CS 3343 - Project 2
@@ -17,13 +17,11 @@ import java.util.Scanner;
  */
 public class Main 
 {
-
-	//Number derived from Professor Gibson's video instructions
+	//Conversion derived from Professor Gibson's video instructions
 	static double radiusOfEarthInMiles = 3958.8;
 
     public static void main(String[] args) 
     {
-    	
         // Reading in individual store information and queries through CSVs
         ArrayList<Store> whataburgerStores = readInCSVStores( "src/data/WhataburgerData.csv" );
         ArrayList<Store> starbucksStores = readInCSVStores( "src/data/StarbucksData.csv" );
@@ -33,23 +31,18 @@ public class Main
         // Completing the given queries specified while calculating the distance between each coordinate and stores
         for ( Query query : queries ) 
         {
-        	
-            ArrayList<StoreDistance> distances = new ArrayList<>();
+            ArrayList<StoreDist> distances = new ArrayList<>();
             
             for ( Store store : whataburgerStores ) 
             {
-            	
-                double distance = Haversine.calculateDistance( query.latitude, query.longitude, store.latitude, store.longitude );
-                distances.add( new StoreDistance( store, distance ) );
-            
+                double distance = Haversine.calcDist( query.latitude, query.longitude, store.latitude, store.longitude );
+                distances.add( new StoreDist( store, distance ) );
             }
             
             for ( Store store : starbucksStores ) 
             {
-              
-            	double distance = Haversine.calculateDistance( query.latitude, query.longitude, store.latitude, store.longitude );
-                distances.add( new StoreDistance( store, distance ) );
-          
+            	double distance = Haversine.calcDist( query.latitude, query.longitude, store.latitude, store.longitude );
+                distances.add( new StoreDist( store, distance ) );
             }
             
             // Order Statistic Query algorithm, determining the stores that are closest (isCloser), and 
@@ -64,7 +57,7 @@ public class Main
             
             }
        
-            StoreDistance isCloser = null;
+            StoreDist isCloser = null;
             
             if ( !distances.isEmpty( ) ) 
             {
@@ -76,119 +69,146 @@ public class Main
             /**
              * Stopping point
              */
-            ArrayList<Store> closeStores = new ArrayList<>();
-            for (StoreDistance storeDistance : distances) {
-                if (storeDistance.distance <= isCloser.distance) {
-                    closeStores.add(storeDistance.store);
+            ArrayList<Store> nearestStores = new ArrayList<>();
+            for ( StoreDist storeDist : distances )
+            {
+                if ( storeDist.distance <= isCloser.distance )
+                {
+                    nearestStores.add( storeDist.store );
                 }
             }
-            Collections.sort(closeStores, new Comparator<Store>() {
+            
+            Collections.sort( nearestStores, new Comparator<Store>()
+            {
                 @Override
-                public int compare(Store s1, Store s2) {
-                    double d1 = Haversine.calculateDistance(query.latitude, query.longitude, s1.latitude, s1.longitude);
-                    double d2 = Haversine.calculateDistance(query.latitude, query.longitude, s2.latitude, s2.longitude);
+                public int compare( Store s1, Store s2 ) {
+                    double d1 = Haversine.calcDist( query.latitude, query.longitude, s1.latitude, s1.longitude );
+                    double d2 = Haversine.calcDist( query.latitude, query.longitude, s2.latitude, s2.longitude );
                     return Double.compare(d1, d2);
                 }
-            });
-            // Print close stores
-            System.out.println("The " + query.numStores + " closest Stores to (" + query.latitude + "," + query.longitude + "):");
-            for (Store store : closeStores) {
-                double distance = Haversine.calculateDistance(query.latitude, query.longitude, store.latitude, store.longitude);
-                String formattedDistance = String.format("%.2f", distance);
-                System.out.println("Store #" + store.id + ". " + store.address + ", " + store.city + ", " + store.state +", " + store.zipCode + ". - " + formattedDistance + " miles)");
+                
+            } );
+            
+            // Print out nearest stores
+            System.out.println( "The " + query.numStores + " closest Stores to (" + query.latitude + "," + query.longitude + "):" );
+            for ( Store store : nearestStores )
+            {
+                double distance = Haversine.calcDist( query.latitude, query.longitude, store.latitude, store.longitude );
+                String formattedDistance = String.format( "%.2f", distance );
+                System.out.println( "Store #" + store.id + ". " + store.address + ", " + store.city + ", " + store.state +", " + store.zipCode + ". - " + formattedDistance + " miles)" );
             }
             System.out.println();
         }
     }
     
-    private static ArrayList<Query> readInCSVQueries(String filename) {
+    private static ArrayList<Query> readInCSVQueries( String filename )
+    {
         ArrayList<Query> queries = new ArrayList<>();
-        try {
-            Scanner scanner = new Scanner(new File(filename));
-            while (scanner.hasNextLine()) {
+        try
+        {
+            Scanner scanner = new Scanner( new File( filename ) );
+            while ( scanner.hasNextLine() )
+            {
                 String line = scanner.nextLine();
                 String[] parts = line.split(",");
-                try {
-                    double latitude = Double.parseDouble(parts[0]);
-                    double longitude = Double.parseDouble(parts[1]);
-                    int numStores = Integer.parseInt(parts[2]);
-                    queries.add(new Query(latitude, longitude, numStores));
-                } catch (NumberFormatException e) {
-                    // Skip this line if latitude or longitude is not a valid double
+                try
+                {
+                    double latitude = Double.parseDouble( parts[0] );
+                    double longitude = Double.parseDouble( parts[1] );
+                    int numStores = Integer.parseInt( parts[2] );
+                    queries.add( new Query( latitude, longitude, numStores ) );
+                } catch ( NumberFormatException e )
+                {
+                    // In the case that latitude and/ or longitude is invalid, continue
                     continue;
                 }
             }
             scanner.close();
-        } catch (FileNotFoundException e) {
+        } catch ( FileNotFoundException e )
+        {
             e.printStackTrace();
         }
         return queries;
     }
     
-    private static ArrayList<Store> readInCSVStores(String filename) {
+    private static ArrayList<Store> readInCSVStores( String filename ) {
         ArrayList<Store> stores = new ArrayList<>();
         try {
-            Scanner scanner = new Scanner(new File(filename));
-            while (scanner.hasNextLine()) {
+            Scanner scanner = new Scanner( new File( filename ) );
+            while ( scanner.hasNextLine() )
+            {
                 String line = scanner.nextLine();
                 //String[] parts = line.split(",");
-                String[] parts = line.split(",(?=([^\"]*\"[^\"]*\")*[^\"]*$)");
+                String[] parts = line.split( ",(?=([^\"]*\"[^\"]*\")*[^\"]*$)" );
                 String id = parts[0];
                 String address = parts[1];
                 String city = parts[2];
                 String state = parts[3];
                 double zipCode = 0;
-                try {
-                    zipCode = Double.parseDouble(parts[4]);
-                } catch (NumberFormatException e) {
-                    // Skip this line if zipCode is not a valid double
+                try
+                {
+                    zipCode = Double.parseDouble( parts[4] );
+                } catch ( NumberFormatException e )
+                {
+                    // In the case that zipCode is invalid, continue
                     continue;
                 }
-                double latitude = Double.parseDouble(parts[5]);
-                double longitude = Double.parseDouble(parts[6]);
-                stores.add(new Store(id, address, city, state, zipCode, latitude, longitude));
+                double latitude = Double.parseDouble( parts[5] );
+                double longitude = Double.parseDouble( parts[6] );
+                stores.add( new Store( id, address, city, state, zipCode, latitude, longitude ) );
             }
             scanner.close();
-        } catch (FileNotFoundException e) {
+        } catch ( FileNotFoundException e )
+        {
             e.printStackTrace();
         }
         return stores;
     }
 
-            private static StoreDistance randSelect(ArrayList<StoreDistance> arr, int left, int right, int k) {
-                if (left == right) {
-                    return arr.get(left);
+            private static StoreDist randSelect( ArrayList<StoreDist> arr, int left, int right, int k )
+            {
+                if ( left == right )
+                {
+                    return arr.get( left );
                 }
-                int pivotIndex = randomPartition(arr, left, right);
+                int pivotIndex = randomPartition( arr, left, right );
                 int pivotDist = pivotIndex - left + 1;
-                if (k == pivotDist) {
-                    return arr.get(pivotIndex);
-                } else if (k < pivotDist) {
-                    return randSelect(arr, left, pivotIndex - 1, k);
-                } else {
-                    return randSelect(arr, pivotIndex + 1, right, k - pivotDist);
+                if ( k == pivotDist )
+                {
+                    return arr.get( pivotIndex );
+                }
+                else if ( k < pivotDist )
+                {
+                    return randSelect( arr, left, pivotIndex - 1, k );
+                }
+                else {
+                    return randSelect( arr, pivotIndex + 1, right, k - pivotDist );
                 }
             }
 
-            private static int randomPartition(ArrayList<StoreDistance> arr, int left, int right) {
-                int pivotIndex = new Random().nextInt(right - left + 1) + left;
-                StoreDistance pivotValue = arr.get(pivotIndex);
-                swap(arr, pivotIndex, right);
+            private static int randomPartition( ArrayList<StoreDist> arr, int left, int right )
+            {
+                int pivotIndex = new Random().nextInt( right - left + 1 ) + left;
+                StoreDist pivotValue = arr.get( pivotIndex );
+                swap( arr, pivotIndex, right );
                 int storeIndex = left;
-                for (int i = left; i < right; i++) {
-                    if (arr.get(i).distance < pivotValue.distance) {
-                        swap(arr, i, storeIndex);
+                for ( int i = left; i < right; i++ )
+                {
+                    if ( arr.get(i).distance < pivotValue.distance )
+                    {
+                        swap( arr, i, storeIndex );
                         storeIndex++;
                     }
                 }
-                swap(arr, storeIndex, right);
+                swap( arr, storeIndex, right );
                 return storeIndex;
             }
 
-            private static void swap(ArrayList<StoreDistance> arr, int i, int j) {
-                StoreDistance temp = arr.get(i);
-                arr.set(i, arr.get(j));
-                arr.set(j, temp);
+            private static void swap( ArrayList<StoreDist> arr, int i, int j )
+            {
+                StoreDist temp = arr.get( i );
+                arr.set( i, arr.get( j ) );
+                arr.set( j, temp );
             }
         }
         
@@ -205,24 +225,21 @@ public class Main
          * @param latitude
          * @param longitude
          * 
-         * Referred to Professor Gibson's video instructions as well
+         * Referred to Professor Gibson's video instructions
          *
          */
         class Store 
-        {
-        	
+        {	
         	String id;
         	String address;
         	String city;
         	String state;
         	double zipCode;
         	double latitude;
-        	double longitude;
-        
+        	double longitude;  
         	
         	public Store( String id, String address, String city, String state, double zipCode, double latitude, double longitude )
         	{
-        		
 	        	this.id = id;
 	        	this.address = address;
 	        	this.city = city;
@@ -230,7 +247,6 @@ public class Main
 	        	this.zipCode = zipCode;
 	        	this.latitude = latitude;
 	        	this.longitude = longitude;
-        
         	}
         }
         
@@ -244,40 +260,34 @@ public class Main
          */
         class Query 
         {
-        
         	double latitude;
         	double longitude;
         	int numStores;
         	
         	public Query( double latitude, double longitude, int numStores ) 
         	{
-        	
         		this.latitude = latitude;
         		this.longitude = longitude;
         		this.numStores = numStores;
-        	
         	}
         }
         
         /**
          * 
-         * StoreDistance Class is used to store the distance in variables 
+         * StoreDist Class is used to store the distance in variables 
          * @param store and 
          * @param distance
          *
          */
-        class StoreDistance
+        class StoreDist
         {
-        	
         	Store store;
         	double distance;
         	
-        	public StoreDistance( Store store, double distance ) 
+        	public StoreDist( Store store, double distance ) 
         	{
-        	
         		this.store = store;
         		this.distance = distance;
-        	
         	}
         }
         
@@ -294,10 +304,9 @@ public class Main
          */
         class Haversine
         {
-        	
         	static double radiusOfEarthInMiles = 3958.8;
 
-        	public static double calculateDistance( double firstLat, double firstLong, double secondLat, double secondLong ) 
+        	public static double calcDist( double firstLat, double firstLong, double secondLat, double secondLong ) 
         	{
         		
         	    double diffLat = Math.toRadians(secondLat - firstLat);
@@ -309,6 +318,5 @@ public class Main
         	    double haver2 = 2 * Math.atan2( Math.sqrt( haver1 ), Math.sqrt( 1 - haver1 ) );
         	   
         	    return radiusOfEarthInMiles * haver2;
-        	
         	}
         }
