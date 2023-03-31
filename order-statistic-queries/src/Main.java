@@ -7,57 +7,81 @@ import java.util.Random;
 import java.util.Scanner;
 
 /**
- * Main is a Java class.
+ * Main is a Java class representing Project 2's needs as we determine the specified number of stores
+ * located more closely to the given coordinates using the Order Statistic Query algorithm, Rand-Select algorithm, and more
  * 
  * UTSA CS 3343 - Project 2
  * Spring 2023
  * @author Isabella Talijancic (juu530)
  * @author Amalia Talijancic (fwn783)
  */
-public class Main {
+public class Main 
+{
 
-    //private static final int EARTH_RADIUS = 6371; // km
+	//Number derived from Professor Gibson's video instructions
 	static double radiusOfEarthInMiles = 3958.8;
 
-    public static void main(String[] args) {
-        // Read in store data
-        ArrayList<Store> whataburgerStores = readStoresFromFile("src/data/WhataburgerData.csv");
-        //ArrayList<Store> starbucksStores = readStoresFromFile("src/data/StarbucksData.csv");
+    public static void main(String[] args) 
+    {
+    	
+        // Reading in individual store information and queries through CSVs
+        ArrayList<Store> whataburgerStores = readInCSVStores( "src/data/WhataburgerData.csv" );
+        ArrayList<Store> starbucksStores = readInCSVStores( "src/data/StarbucksData.csv" );
 
-        // Read in query points
-        ArrayList<Query> queries = readQueriesFromFile("src/data/Queries.csv");
+        ArrayList<Query> queries = readInCSVQueries( "src/data/Queries.csv" );
         
-        // Perform queries
-        for (Query query : queries) {
+        // Completing the given queries specified while calculating the distance between each coordinate and stores
+        for ( Query query : queries ) 
+        {
+        	
             ArrayList<StoreDistance> distances = new ArrayList<>();
-             //Compute distances from query point to all stores
-            for (Store store : whataburgerStores) {
-                double distance = Haversine.calculateDistance(query.latitude, query.longitude, store.latitude, store.longitude);
-                distances.add(new StoreDistance(store, distance));
+            
+            for ( Store store : whataburgerStores ) 
+            {
+            	
+                double distance = Haversine.calculateDistance( query.latitude, query.longitude, store.latitude, store.longitude );
+                distances.add( new StoreDistance( store, distance ) );
+            
             }
-//            for (Store store : starbucksStores) {
-//                double distance = Haversine.calculateDistance(query.latitude, query.longitude, store.latitude, store.longitude);
-//                distances.add(new StoreDistance(store, distance));
-//            }
-            // Use order statistic query to find farthest store we care about
-            int k = query.numStores;
-            if (k > distances.size()) {
-                k = distances.size();
+            
+            for ( Store store : starbucksStores ) 
+            {
+              
+            	double distance = Haversine.calculateDistance( query.latitude, query.longitude, store.latitude, store.longitude );
+                distances.add( new StoreDistance( store, distance ) );
+          
+            }
+            
+            // Order Statistic Query algorithm, determining the stores that are closest (isCloser), and 
+            // using Collection.Sort() to sort them by their distance
+            int lookingAt;
+            lookingAt = query.numStores;
+            
+            if ( lookingAt > distances.size( ) ) 
+            {
+            	
+                lookingAt = distances.size( );
+            
             }
        
-            StoreDistance kthClosest = null;
-            if (!distances.isEmpty()) {
-                kthClosest = randSelect(distances, 0, distances.size() - 1, k);
+            StoreDistance isCloser = null;
+            
+            if ( !distances.isEmpty( ) ) 
+            {
+            	
+                isCloser = randSelect( distances, 0, distances.size( ) - 1, lookingAt );
+           
             }
 
-            // Find all stores that are at least as close as kthClosest
+            /**
+             * Stopping point
+             */
             ArrayList<Store> closeStores = new ArrayList<>();
             for (StoreDistance storeDistance : distances) {
-                if (storeDistance.distance <= kthClosest.distance) {
+                if (storeDistance.distance <= isCloser.distance) {
                     closeStores.add(storeDistance.store);
                 }
             }
-            // Sort close stores by distance from query point
             Collections.sort(closeStores, new Comparator<Store>() {
                 @Override
                 public int compare(Store s1, Store s2) {
@@ -77,7 +101,7 @@ public class Main {
         }
     }
     
-    private static ArrayList<Query> readQueriesFromFile(String filename) {
+    private static ArrayList<Query> readInCSVQueries(String filename) {
         ArrayList<Query> queries = new ArrayList<>();
         try {
             Scanner scanner = new Scanner(new File(filename));
@@ -101,7 +125,7 @@ public class Main {
         return queries;
     }
     
-    private static ArrayList<Store> readStoresFromFile(String filename) {
+    private static ArrayList<Store> readInCSVStores(String filename) {
         ArrayList<Store> stores = new ArrayList<>();
         try {
             Scanner scanner = new Scanner(new File(filename));
@@ -168,8 +192,25 @@ public class Main {
             }
         }
         
-        //Store Class
-        class Store {
+        /**
+         * 
+         * Store Class used to store variables representing parts of each line in the Whataburger and Starbucks CSVs 
+         * so as to organize information, notably the coordinates, and print all data relating to queries once finished
+         * using variables 
+         * @param id
+         * @param address
+         * @param city
+         * @param state
+         * @param zipCode
+         * @param latitude
+         * @param longitude
+         * 
+         * Referred to Professor Gibson's video instructions as well
+         *
+         */
+        class Store 
+        {
+        	
         	String id;
         	String address;
         	String city;
@@ -178,7 +219,10 @@ public class Main {
         	double latitude;
         	double longitude;
         
-        	public Store(String id, String address, String city, String state, double zipCode, double latitude, double longitude){
+        	
+        	public Store( String id, String address, String city, String state, double zipCode, double latitude, double longitude )
+        	{
+        		
 	        	this.id = id;
 	        	this.address = address;
 	        	this.city = city;
@@ -186,47 +230,85 @@ public class Main {
 	        	this.zipCode = zipCode;
 	        	this.latitude = latitude;
 	        	this.longitude = longitude;
+        
         	}
         }
         
-        //Query Class
-        class Query {
+        /**
+         * 
+         * Query Class is used to store the queries in variables 
+         * @param latitude
+         * @param longitude and 
+         * @param numStores
+         *
+         */
+        class Query 
+        {
+        
         	double latitude;
         	double longitude;
         	int numStores;
         	
-        	public Query(double latitude, double longitude, int numStores) {
+        	public Query( double latitude, double longitude, int numStores ) 
+        	{
+        	
         		this.latitude = latitude;
         		this.longitude = longitude;
         		this.numStores = numStores;
+        	
         	}
         }
         
-        //StoreDistance Class
-        class StoreDistance{
+        /**
+         * 
+         * StoreDistance Class is used to store the distance in variables 
+         * @param store and 
+         * @param distance
+         *
+         */
+        class StoreDistance
+        {
+        	
         	Store store;
         	double distance;
         	
-        	public StoreDistance(Store store, double distance) {
+        	public StoreDistance( Store store, double distance ) 
+        	{
+        	
         		this.store = store;
         		this.distance = distance;
+        	
         	}
         }
         
-        //Haversine Class
-        class Haversine{
-        	//private static final int EARTH_RADIUS = 6371; // km
+        /**
+         * 
+         * Haversine Class is used here to calculate the distances between two specified points
+         * @param firstLat
+         * @param firstLong
+         * @param secondLat and 
+         * @param secondLong
+         * 
+         * @return radiusOfEarthInMiles * haver2
+         *
+         */
+        class Haversine
+        {
+        	
         	static double radiusOfEarthInMiles = 3958.8;
 
-        	public static double calculateDistance(double lat1, double lon1, double lat2, double lon2) {
-        	    double dLat = Math.toRadians(lat2 - lat1);
-        	    double dLon = Math.toRadians(lon2 - lon1);
-        	    double lat1Rad = Math.toRadians(lat1);
-        	    double lat2Rad = Math.toRadians(lat2);
-        	    double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        	               Math.sin(dLon / 2) * Math.sin(dLon / 2) *
-        	               Math.cos(lat1Rad) * Math.cos(lat2Rad);
-        	    double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        	    return radiusOfEarthInMiles * c;
+        	public static double calculateDistance( double firstLat, double firstLong, double secondLat, double secondLong ) 
+        	{
+        		
+        	    double diffLat = Math.toRadians(secondLat - firstLat);
+        	    double diffLong = Math.toRadians(secondLong - firstLong);
+        	    double firstLatRad = Math.toRadians(firstLat);
+        	    double secLatRad = Math.toRadians(secondLat);
+        	   
+        	    double haver1 = Math.sin( diffLat / 2 ) * Math.sin( diffLat / 2 ) + Math.sin( diffLong / 2 ) * Math.sin( diffLong / 2 ) * Math.cos( firstLatRad ) * Math.cos( secLatRad );
+        	    double haver2 = 2 * Math.atan2( Math.sqrt( haver1 ), Math.sqrt( 1 - haver1 ) );
+        	   
+        	    return radiusOfEarthInMiles * haver2;
+        	
         	}
         }
